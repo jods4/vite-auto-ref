@@ -1,6 +1,7 @@
 // This function filters out Identifier nodes that aren't actually variable
 // Copied from https://github.com/facebook/jscodeshift/blob/master/src/collections/VariableDeclarator.js#L86
-// This is common enough that I wished jscodeshift had a public helper for that
+
+import { types } from "recast";
 
 const {
   ClassProperty,
@@ -8,9 +9,9 @@ const {
   MethodDefinition,
   MemberExpression,
   Property
-} = require("recast").types.namedTypes;
+} = types.namedTypes;
 
-module.exports = function isVariable(path) {
+export function isVariable(path) {
   const parent = path.parent.node;
 
   // obj.name

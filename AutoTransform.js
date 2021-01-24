@@ -1,18 +1,20 @@
-const isVariable = require("./isVariable");
-const { visit, types: { namedTypes, builders: b } } = require("recast");
+import { isVariable } from "./isVariable";
+import { visit, types } from "recast";
+
+const b = types.builders;
 const { 
   Identifier, 
   CallExpression, 
   Literal,
   MemberExpression, 
   VariableDeclarator 
-} = namedTypes;
+} = types.namedTypes;
 
 function isIdent(node, name) {
   return Identifier.check(node) && node.name === name;
 }
 
-module.exports = function(ast) {
+export default function(ast) {
   // 1. Look for import { auto } from "vue"  
 
   let auto, ref, globalScope, vueImport;
@@ -152,5 +154,7 @@ module.exports = function(ast) {
       path.replace(b.memberExpression(path.node, valueIdent));
       return false;
     }
-  });  
+  });
+
+  return ast; // For chaining convenience
 }

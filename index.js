@@ -1,14 +1,10 @@
-const { parse, print } = require("recast");
-const transformAst = require("./AutoTransform");
+export default function AutoRefPlugin() {
+  return {
+    name: 'auto-ref',
+    
+    transform(src, id) {
 
-function transformSrc(src) {
-  const ast = parse(src, {
-    tolerant: true,
-  });
-
-  transformAst(ast);
-
-  return print(ast);
+      return 
+    }
+  }
 }
-
-module.exports = { transformAst, transformSrc };
