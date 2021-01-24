@@ -74,7 +74,8 @@ regular.magic({
 });
 
 class A { magic() {} }
-class B { magic = 3 }
+// Not supported by esprima yet
+// class B { magic = 3 }
 
 // More test cases (they just work, though) --------------
 
