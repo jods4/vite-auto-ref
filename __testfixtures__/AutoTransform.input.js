@@ -1,4 +1,5 @@
 // computed should be auto-imported as it's used by auto.computed in this code
+import { auto } from "thats-not-it";
 import { createApp, auto as a2, ref } from "vue";
 
 // Untouched code ----------------------------------------
@@ -85,3 +86,10 @@ obj = {
   // Shorthand
   magic,
 }
+
+// Temporal dead zone
+function later() { 
+  console.log(tdz);
+}
+
+let tdz = a2(1);
