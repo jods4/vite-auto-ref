@@ -1,6 +1,6 @@
 // computed should be auto-imported as it's used by auto.computed in this code
 import { auto } from "thats-not-it";
-import { createApp, auto as a2, ref, computed } from "vue";
+import { createApp, ref as ref, computed } from "vue";
 
 // Untouched code ----------------------------------------
 

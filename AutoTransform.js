@@ -17,20 +17,23 @@ module.exports = function(ast) {
 
   let auto, ref, globalScope, vueImport;
   visit(ast, {
-    visitImportDeclaration({ node, scope }) {
+    visitImportDeclaration(path) {
+      const { node, scope } = path;
       if (Literal.check(node.source) && node.source.value === "vue") {
         // NOTE: Only a single auto import is supported.
         //       Doing `import { auto, auto as a2 } from "vue"` will result in only `auto`
         //       being supported in this module (first wins).
-        let specifier = node.specifiers.find(x => isIdent(x.imported, "auto"));
-        if (specifier) {
-          auto = specifier.local.name;
+        let i = node.specifiers.findIndex(x => isIdent(x.imported, "auto"));
+        if (i >= 0) {          
+          auto = node.specifiers[i].local.name;
           globalScope = scope;
           vueImport = node;
 
+          // Remove the auto import
+          path.get("specifiers", i).prune();
+
           // Additionally look for `ref`
-          specifier = node.specifiers.find(x => isIdent(x.imported, "ref"));
-          if (specifier) ref = specifier.local.name;
+          ref = node.specifiers.find(x => isIdent(x.imported, "ref"))?.local.name;
 
           this.abort();
         }
@@ -112,7 +115,7 @@ module.exports = function(ast) {
       }
     }
   });
-
+ 
   // 3. Add missing imports
 
   for (let i in imports) {
