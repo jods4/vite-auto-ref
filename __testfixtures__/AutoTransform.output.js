@@ -98,9 +98,16 @@ let varDecl = tdz.value;
 
 // Special case: setup() returning object literal --------
 
-const Comp = {
+const Comp = { 
   setup() {
     let a = ref(1), b = ref(2), c = a.value + b.value;
-    return { a, aa: b, c };
+    function setup() {
+      return { a: a.value };
+    }
+    let f = function () {
+      return { a: a.value };
+    }
+    let lambda = () => { return { a: a.value }; };
+    return { a, aa: b, c, d: a.value + b.value };
   }
-};
+}

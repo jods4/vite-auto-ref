@@ -7,6 +7,8 @@ const {
   CallExpression, 
   Literal,
   MemberExpression, 
+  ObjectExpression,
+  Property,
   VariableDeclarator 
 } = types.namedTypes;
 
@@ -61,7 +63,7 @@ export default function(ast) {
     ? (node, scope) => isIdent(node, ref) && !isShadowed(ref, scope)
     : () => false;
 
-  // 2. Replace auto[.ref|.computed]() calls
+  // 2. Find and remove auto[.ref|.computed]() calls
 
   const imports = Object.create(null);
   const variables = new Map();
@@ -113,7 +115,7 @@ export default function(ast) {
 
   const valueIdent = b.identifier("value");
 
-  visit(ast, {
+  const identVisitor = {
     visitIdentifier(path) {
       const { node: { name }, scope } = path;
       const scopes = variables.get(name);
@@ -137,8 +139,48 @@ export default function(ast) {
       // x -> x.value
       path.replace(b.memberExpression(path.node, valueIdent));
       return false;
-    }
-  });
+    },
+
+    isSetup(path) {
+      return path.name === "value" 
+          && Property.check(path.parent.node) 
+          && isIdent(path.parent.node.key, "setup");
+    },
+
+    visitFunction(path) {
+      // We make an exception when visiting a { setup() { } } member
+      // and don't transform auto properties in its return statement 
+      // if they're directly affected to an object
+      this.traverse(path, this.isSetup(path) ? setupVisitor : undefined);      
+    },
+  };
+
+  const setupVisitor = {
+    visitIdentifier: identVisitor.visitIdentifier,
+    
+    isSetup: identVisitor.isSetup,
+
+    visitFunction(path) {
+      this.traverse(path, this.isSetup(path) ? undefined : identVisitor);
+    },
+
+    visitReturnStatement(path) {
+      // Inside setup(), we never add .value to plain identifiers when
+      // returning a plain literal object.
+      const returned = path.node.argument;
+      if (ObjectExpression.check(returned)) {
+        path.get("argument", "properties").each(a => { // `a` is NodePath<Property>
+          if (!Identifier.check(a.node.value))
+            this.traverse(a);
+        });
+        return false;
+      }
+
+      this.traverse(path);
+    },
+  };
+
+  visit(ast, identVisitor);
 
   // 4. Fix imports
 
