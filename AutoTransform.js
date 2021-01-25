@@ -1,4 +1,4 @@
-import { isVariable } from "./isVariable";
+import { isVariable } from "./isVariable.js";
 import { visit, types } from "recast";
 
 const b = types.builders;
@@ -42,15 +42,10 @@ export default function(ast) {
       }
 
       return false;
-    },
-
-    visitStatement() {
-      // In case we go past the static imports without finding Vue
-      this.abort();
-    },
+    }
   });
 
-  if (!auto) return;
+  if (!auto) return ast;
 
   function isShadowed(name, scope, declaring = globalScope) {
     // Somehow, recast creates new scope instances for the same node while we visit the AST
