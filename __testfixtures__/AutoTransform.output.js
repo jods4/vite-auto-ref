@@ -108,6 +108,11 @@ const Comp = {
       return { a: a.value };
     }
     let lambda = () => { return { a: a.value }; };
-    return { a, aa: b, c, d: a.value + b.value };
+    return {
+      a,
+      aa: b,
+      c,
+      d: a.value + b.value
+    };
   }
 }

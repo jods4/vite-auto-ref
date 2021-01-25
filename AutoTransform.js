@@ -172,6 +172,9 @@ export default function(ast) {
         path.get("argument", "properties").each(a => { // `a` is NodePath<Property>
           if (!Identifier.check(a.node.value))
             this.traverse(a);
+          // Remove the identifier if it's "auto", it's automatically added by Vue compiler in <script setup>
+          if (a.node.value.name === auto && !isShadowed(auto, path.scope))
+            a.prune();
         });
         return false;
       }
