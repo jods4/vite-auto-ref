@@ -17,8 +17,8 @@
   "author": "jods",
   "license": "MIT",
   "dependencies": {
+    "@babel/parser": "^7.12.11",
     "es-module-lexer": "^0.3.26",
-    "meriyah": "^4.0.0",
     "recast": "^0.20.4"
   },
   "devDependencies": {

@@ -29,7 +29,7 @@ export default function(ast) {
         if (i >= 0) {          
           auto = node.specifiers[i].local.name;
           globalScope = scope;
-          vueImport = node;
+          vueImport = path;
 
           // Remove the auto import
           path.get("specifiers", i).prune();
@@ -96,8 +96,7 @@ export default function(ast) {
         if (!registerVariable(parent)) return;        
         // FIXME: warn if not called with exactly 1 arg
         if (args.length !== 1) return;
-        path.replace(args[0])
-        return;
+        return args[0];
       }
 
       // auto.ref(x) -> ref(x)
@@ -105,7 +104,7 @@ export default function(ast) {
       if (MemberExpression.check(callee) && isAuto(callee.object, scope)) {
         if (isIdent(callee.property, "ref") || isIdent(callee.property, "computed")) {
           if (!registerVariable(parent)) return;
-          path.node.callee = callee.property;
+          path.get("callee").replace(callee.property);
           imports[callee.property.name] = true;
           return;
         }
@@ -116,8 +115,11 @@ export default function(ast) {
   // 3. Add missing imports
 
   for (let i in imports) {
-    if (!vueImport.specifiers.some(x => isIdent(x.imported, i)))
-      vueImport.specifiers.push(b.importSpecifier(b.identifier(i)));
+    const { specifiers } = vueImport.node;
+    if (!specifiers.some(x => isIdent(x.imported, i))) {
+      const last = vueImport.get("specifiers", specifiers.length - 1);
+      last.replace(last.value, b.importSpecifier(b.identifier(i)));
+    }
   }
 
   // 4. Replace reads from, writes to, and ref calls around tracked variables
