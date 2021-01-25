@@ -2,10 +2,12 @@
   "name": "vite-auto-ref",
   "version": "0.1.0",
   "description": "Vite plugin that allows using refs without .value.",
-  "main": "index.js",
   "type": "module",
+  "main": "index.js",
+  "types": "./vite-auto-ref.d.ts",
   "files": [
-    "/*.js"
+    "/*.js",
+    "/*.d.ts"
   ],
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
@@ -16,6 +18,9 @@
   ],
   "author": "jods",
   "license": "MIT",
+  "peerDependencies": {
+    "vue": ">=3.0.0"
+  },
   "dependencies": {
     "@babel/parser": "^7.12.11",
     "es-module-lexer": "^0.3.26",

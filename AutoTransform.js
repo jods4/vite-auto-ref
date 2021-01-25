@@ -17,13 +17,13 @@ function isIdent(node, name) {
 }
 
 export default function(ast) {
-  // 1. Look for import { auto } from "vue"  
+  // 1. Look for import { auto } from "vite-auto-ref", as well as import { ref } from "vue"
 
-  let auto, ref, globalScope, vueImport;
+  let auto, ref, globalScope, autoRefImport;
   visit(ast, {
     visitImportDeclaration(path) {
       const { node, scope } = path;
-      if (Literal.check(node.source) && node.source.value === "vue") {
+      if (node.source.value === "vite-auto-ref") {
         // NOTE: Only a single auto import is supported.
         //       Doing `import { auto, auto as a2 } from "vue"` will result in only `auto`
         //       being supported in this module (first wins).
@@ -31,14 +31,15 @@ export default function(ast) {
         if (i >= 0) {          
           auto = node.specifiers[i].local.name;
           globalScope = scope;
-          vueImport = path;          
-
-          // Additionally look for `ref`
-          ref = node.specifiers.find(x => isIdent(x.imported, "ref"))?.local.name;
-
-          this.abort();
+          autoRefImport = path;          
         }
       }
+      else if (node.source.value === "vue") {
+        ref = node.specifiers.find(x => isIdent(x.imported, "ref"))?.local.name;
+      }
+
+      if (auto && ref)
+        this.abort();
 
       return false;
     }
@@ -65,7 +66,7 @@ export default function(ast) {
 
   // 2. Find and remove auto[.ref|.computed]() calls
 
-  const imports = Object.create(null);
+  const imports = new Set();
   const variables = new Map();
 
   function registerVariable({ node, scope }) {
@@ -104,7 +105,7 @@ export default function(ast) {
         if (isIdent(callee.property, "ref") || isIdent(callee.property, "computed")) {
           if (!registerVariable(parent)) return;
           path.get("callee").replace(callee.property);
-          imports[callee.property.name] = true;
+          imports.add(callee.property.name);
           return;
         }
       }
@@ -185,22 +186,17 @@ export default function(ast) {
 
   visit(ast, identVisitor);
 
-  // 4. Fix imports
+  // 4. Fix imports: add missing required imports and remove "vite-auto-ref"
 
-  // Add required imports
-  for (let i in imports) {
-    const { specifiers } = vueImport.node;
-    if (!specifiers.some(x => isIdent(x.imported, i)))
-      vueImport.get("specifiers").push(b.importSpecifier(b.identifier(i)));
-  }
-
-  // Remove auto
-  if (vueImport.node.specifiers.length === 1)
-    vueImport.prune();
-  else {
-    const i = vueImport.node.specifiers.findIndex(x => isIdent(x.imported, "auto"));
-    vueImport.get("specifiers", i).prune();
-  }
+  const missing = Array.from(imports.keys()).filter(i => !globalScope.declares(i));
+  if (missing.length)
+    autoRefImport.replace(
+      b.importDeclaration(
+        missing.map(m => b.importSpecifier(b.identifier(m))),
+        b.literal("vue")
+      ));
+  else
+    autoRefImport.prune();
 
   return ast; // For chaining convenience
 }
