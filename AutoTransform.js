@@ -29,10 +29,7 @@ export default function(ast) {
         if (i >= 0) {          
           auto = node.specifiers[i].local.name;
           globalScope = scope;
-          vueImport = path;
-
-          // Remove the auto import
-          path.get("specifiers", i).prune();
+          vueImport = path;          
 
           // Additionally look for `ref`
           ref = node.specifiers.find(x => isIdent(x.imported, "ref"))?.local.name;
@@ -110,19 +107,9 @@ export default function(ast) {
         }
       }
     }
-  });
- 
-  // 3. Add missing imports
+  }); 
 
-  for (let i in imports) {
-    const { specifiers } = vueImport.node;
-    if (!specifiers.some(x => isIdent(x.imported, i))) {
-      const last = vueImport.get("specifiers", specifiers.length - 1);
-      last.replace(last.value, b.importSpecifier(b.identifier(i)));
-    }
-  }
-
-  // 4. Replace reads from, writes to, and ref calls around tracked variables
+  // 3. Replace reads from, writes to, and ref calls around tracked variables
 
   const valueIdent = b.identifier("value");
 
@@ -137,7 +124,7 @@ export default function(ast) {
 
       // Don't replace variable declaration itself!
       const parentNode = path.parent.node;
-      if (VariableDeclarator.check(parentNode)) return false;
+      if (path.name === "id" && VariableDeclarator.check(parentNode)) return false;
 
       // ref(x) -> x
       if (CallExpression.check(parentNode) && 
@@ -152,6 +139,23 @@ export default function(ast) {
       return false;
     }
   });
+
+  // 4. Fix imports
+
+  // Add required imports
+  for (let i in imports) {
+    const { specifiers } = vueImport.node;
+    if (!specifiers.some(x => isIdent(x.imported, i)))
+      vueImport.get("specifiers").push(b.importSpecifier(b.identifier(i)));
+  }
+
+  // Remove auto
+  if (vueImport.node.specifiers.length === 1)
+    vueImport.prune();
+  else {
+    const i = vueImport.node.specifiers.findIndex(x => isIdent(x.imported, "auto"));
+    vueImport.get("specifiers", i).prune();
+  }
 
   return ast; // For chaining convenience
 }

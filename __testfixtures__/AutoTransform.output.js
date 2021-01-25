@@ -91,5 +91,16 @@ obj = {
 function later() { 
   console.log(tdz.value);
 }
-
 let tdz = 1;
+
+// Bug when used directly in VariableDeclarator
+let varDecl = tdz.value;
+
+// Special case: setup() returning object literal --------
+
+const Comp = {
+  setup() {
+    let a = ref(1), b = ref(2), c = a.value + b.value;
+    return { a, aa: b, c };
+  }
+};
