@@ -1,9 +1,11 @@
-import type { computed, ref, UnwrapRef } from "vue";
-  
+import type { UnwrapRef } from "vue";
+
 interface Auto {
-  <T>(x: T): UnwrapRef<T>;
-  ref: typeof ref;
-  computed: typeof computed;
+  <T>(value: T): UnwrapRef<T>;
+  ref<T>(value: T): T;
+  ref<T = any>(): T | undefined;
+  computed<T>(getter: () => T): T;
+  computed<T>(options: { get(): T, set(value: T): void }): T;
 }
 
 export const auto: Auto;
