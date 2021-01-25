@@ -17,6 +17,7 @@
   "author": "jods",
   "license": "MIT",
   "dependencies": {
+    "es-module-lexer": "^0.3.26",
     "meriyah": "^4.0.0",
     "recast": "^0.20.4"
   },
